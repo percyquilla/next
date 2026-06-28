@@ -12,6 +12,8 @@ import TextField from '@mui/material/TextField';
 import CardHeader from '@mui/material/CardHeader';
 import CardContent from '@mui/material/CardContent';
 
+import { PhoneInput } from '@/components/phone-input';
+
 // ----------------------------------------------------------------------
 
 type FormValues = {
@@ -20,14 +22,22 @@ type FormValues = {
   phone: string;
 };
 
-type FormErrors = Partial<FormValues>;
+type FormErrors = {
+  name?: string;
+  age?: string;
+  phone?: string;
+};
 
 type Props = {
   onAdd: (name: string, age: number, phone: string) => void;
 };
 
 export function PersonForm({ onAdd }: Props) {
-  const [values, setValues] = useState<FormValues>({ name: '', age: '', phone: '' });
+  const [values, setValues] = useState<FormValues>({
+    name: '',
+    age: '',
+    phone: '',
+  });
   const [errors, setErrors] = useState<FormErrors>({});
 
   const validate = (): boolean => {
@@ -44,22 +54,18 @@ export function PersonForm({ onAdd }: Props) {
     }
     if (!values.phone.trim()) {
       next.phone = 'El celular es requerido';
-    } else if (!/^\+?[\d\s\-()]{7,15}$/.test(values.phone.trim())) {
-      next.phone = 'Ingresa un número válido';
+    } else if (values.phone.trim().length < 8) {
+      next.phone = 'Número inválido';
     }
 
     setErrors(next);
     return Object.keys(next).length === 0;
   };
 
-  const handleChange = (field: keyof FormValues) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValues((prev) => ({ ...prev, [field]: e.target.value }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+
     onAdd(values.name.trim(), Number(values.age), values.phone.trim());
     setValues({ name: '', age: '', phone: '' });
     setErrors({});
@@ -85,7 +91,10 @@ export function PersonForm({ onAdd }: Props) {
             label="Nombre"
             placeholder="Ej. Juan Pérez"
             value={values.name}
-            onChange={handleChange('name')}
+            onChange={(e) => {
+              setValues((prev) => ({ ...prev, name: e.target.value }));
+              if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
+            }}
             error={!!errors.name}
             helperText={errors.name}
           />
@@ -98,7 +107,10 @@ export function PersonForm({ onAdd }: Props) {
                 placeholder="Ej. 25"
                 type="number"
                 value={values.age}
-                onChange={handleChange('age')}
+                onChange={(e) => {
+                  setValues((prev) => ({ ...prev, age: e.target.value }));
+                  if (errors.age) setErrors((prev) => ({ ...prev, age: undefined }));
+                }}
                 error={!!errors.age}
                 helperText={errors.age}
                 slotProps={{ htmlInput: { min: 1, max: 120 } }}
@@ -106,16 +118,23 @@ export function PersonForm({ onAdd }: Props) {
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
+              <PhoneInput
                 label="Número de celular"
-                placeholder="Ej. +51 987 654 321"
-                type="tel"
+                defaultCountry="BO"
                 value={values.phone}
-                onChange={handleChange('phone')}
-                error={!!errors.phone}
-                helperText={errors.phone}
+                onChange={(val) => {
+                  setValues((prev) => ({ ...prev, phone: val }));
+                  if (errors.phone) setErrors((prev) => ({ ...prev, phone: undefined }));
+                }}
               />
+              {errors.phone && (
+                <Box
+                  component="p"
+                  sx={{ mt: 0.5, mx: '14px', typography: 'caption', color: 'error.main' }}
+                >
+                  {errors.phone}
+                </Box>
+              )}
             </Grid>
           </Grid>
 
