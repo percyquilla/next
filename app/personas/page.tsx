@@ -1,18 +1,18 @@
 import type { Metadata } from 'next';
 
-import { HomeView } from '@/sections/home/view';
+import { PersonView } from '@/sections/person/view';
 import { MainLayout } from '@/layouts/main';
 
 // ----------------------------------------------------------------------
 
 export const metadata: Metadata = {
-  title: 'Mi App — Inicio',
+  title: 'Registro de Personas',
 };
 
 export default function Page() {
   return (
     <MainLayout>
-      <HomeView />
+      <PersonView />
     </MainLayout>
   );
 }
