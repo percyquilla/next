@@ -169,3 +169,42 @@ gcloud run services update TU_SERVICIO \
 **Flujo de estados:** `sending` → `sent` (✓) → `delivered` (✓✓) → `read` (✓✓ azul)
 
 El webhook actualiza el store al recibir cada evento; el chat lo refleja en el siguiente ciclo de polling (3 s).
+
+## Componentes compartidos
+
+### PhoneInput (`components/phone-input/`)
+
+Selector de teléfono con bandera, código de país y buscador. Dependencias: `react-phone-number-input`, `@iconify/react`.
+
+```tsx
+import { PhoneInput } from '@/components/phone-input';
+
+<PhoneInput
+  label="Número de celular"
+  defaultCountry="BO"   // Bolivia por defecto
+  value={phone}
+  onChange={(val) => setPhone(val)}
+/>
+```
+
+- Devuelve el número en formato E.164 (`+59175197897`)
+- El selector muestra banderas SVG desde CDN (`purecatamphetamine.github.io/country-flag-icons`)
+- Búsqueda filtra por nombre, código ISO y prefijo telefónico
+
+**Archivos clave:**
+- `components/phone-input/phone-input.tsx` — componente principal, usa `react-phone-number-input/input`
+- `components/phone-input/list-popover.tsx` — popover con buscador y lista de países
+- `components/flag-icon/flag-icon.tsx` — bandera SVG con soporte `sx`
+- `components/search-not-found/search-not-found.tsx` — mensaje vacío para el buscador
+- `components/iconify/index.tsx` — wrapper de `@iconify/react` con soporte MUI `sx`
+- `assets/data/countries.ts` — 250 países con código ISO, label y prefijo telefónico
+
+### ESLint — reglas desactivadas
+
+`eslint.config.mjs` desactiva tres reglas conflictivas con el stack actual:
+
+| Regla | Motivo |
+|-------|--------|
+| `@typescript-eslint/no-explicit-any` | `theme.vars` de MUI v9 no está completamente tipado; coherente con `noImplicitAny: false` en tsconfig |
+| `react-hooks/preserve-manual-memoization` | El React Compiler infiere deps de setters de estado (siempre estables) que no hace falta declarar |
+| `react-hooks/set-state-in-effect` | `fetchMessages` es async; setState se llama en el callback async, no síncronamente |

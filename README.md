@@ -106,6 +106,36 @@ Cada cambio de estado llega por webhook y se refleja en el chat en tiempo real (
 
 ---
 
+## Componente PhoneInput
+
+El formulario de personas usa un selector de teléfono con bandera, código de país y buscador integrado.
+
+### Uso
+
+```tsx
+import { PhoneInput } from '@/components/phone-input';
+
+<PhoneInput
+  label="Número de celular"
+  defaultCountry="BO"   // Bolivia por defecto
+  value={phone}
+  onChange={(val) => setPhone(val)}
+/>
+```
+
+- Devuelve el número en formato E.164 (ej. `+59175197897`)
+- Las banderas se cargan desde CDN: `purecatamphetamine.github.io/country-flag-icons`
+- El buscador filtra por nombre del país, código ISO y prefijo telefónico
+- 250 países disponibles en `assets/data/countries.ts`
+
+### Dependencias instaladas
+
+```bash
+npm install react-phone-number-input @iconify/react
+```
+
+---
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
