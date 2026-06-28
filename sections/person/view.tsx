@@ -15,15 +15,16 @@ export type Person = {
   id: string;
   name: string;
   age: number;
+  phone: string;
 };
 
 export function PersonView() {
   const [people, setPeople] = useState<Person[]>([]);
 
-  const handleAdd = useCallback((name: string, age: number) => {
+  const handleAdd = useCallback((name: string, age: number, phone: string) => {
     setPeople((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), name, age },
+      { id: crypto.randomUUID(), name, age, phone },
     ]);
   }, []);
 
@@ -36,7 +37,7 @@ export function PersonView() {
       <Box sx={{ mb: 5 }}>
         <Typography variant="h4">Registro de personas</Typography>
         <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
-          Ingresa el nombre y la edad para agregar personas a la lista.
+          Ingresa el nombre, edad y celular para agregar personas a la lista.
         </Typography>
       </Box>
 

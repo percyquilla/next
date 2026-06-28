@@ -1,6 +1,6 @@
 'use client';
 
-import type { Direction, ThemeOptions } from '@mui/material/styles';
+import type { ThemeOptions } from '@mui/material/styles';
 
 import { createTheme as createMuiTheme } from '@mui/material/styles';
 
@@ -12,11 +12,10 @@ import { themeConfig } from './theme-config';
 import { components } from './core/components';
 import { typography } from './core/typography';
 import { customShadows } from './core/custom-shadows';
+import { applySettingsToTheme, applySettingsToComponents } from './with-settings';
 
 // ----------------------------------------------------------------------
 
-// Cast to `any` because MUI's ColorSystemOptions type doesn't expose the full
-// runtime API (e.g. shadows, customShadows, opacity per scheme) in its types yet.
 export const baseTheme: any = {
   colorSchemes: {
     light: {
@@ -36,17 +35,25 @@ export const baseTheme: any = {
   components,
   typography,
   shape: { borderRadius: 8 },
-  direction: themeConfig.direction as Direction,
+  direction: themeConfig.direction,
   cssVariables: themeConfig.cssVariables,
 };
 
 // ----------------------------------------------------------------------
 
 type CreateThemeOptions = {
-  /** Partial theme to deep-merge on top of the base theme (palette, shape, etc.). */
+  settingsState?: Record<string, any>;
   themeOverrides?: ThemeOptions;
+  localeComponents?: Record<string, any>;
 };
 
-export function createTheme({ themeOverrides = {} }: CreateThemeOptions = {}) {
-  return createMuiTheme(baseTheme, themeOverrides);
+export function createTheme({
+  settingsState,
+  themeOverrides = {},
+  localeComponents = {},
+}: CreateThemeOptions = {}) {
+  const updatedCore = settingsState ? applySettingsToTheme(baseTheme, settingsState) : baseTheme;
+  const updatedComponents = settingsState ? applySettingsToComponents(settingsState) : {};
+
+  return createMuiTheme(updatedCore, updatedComponents, localeComponents, themeOverrides);
 }

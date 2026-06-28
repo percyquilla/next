@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
+import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
@@ -16,16 +17,17 @@ import CardContent from '@mui/material/CardContent';
 type FormValues = {
   name: string;
   age: string;
+  phone: string;
 };
 
 type FormErrors = Partial<FormValues>;
 
 type Props = {
-  onAdd: (name: string, age: number) => void;
+  onAdd: (name: string, age: number, phone: string) => void;
 };
 
 export function PersonForm({ onAdd }: Props) {
-  const [values, setValues] = useState<FormValues>({ name: '', age: '' });
+  const [values, setValues] = useState<FormValues>({ name: '', age: '', phone: '' });
   const [errors, setErrors] = useState<FormErrors>({});
 
   const validate = (): boolean => {
@@ -40,6 +42,11 @@ export function PersonForm({ onAdd }: Props) {
     } else if (!Number.isInteger(ageNum) || ageNum < 1 || ageNum > 120) {
       next.age = 'Ingresa una edad válida (1 – 120)';
     }
+    if (!values.phone.trim()) {
+      next.phone = 'El celular es requerido';
+    } else if (!/^\+?[\d\s\-()]{7,15}$/.test(values.phone.trim())) {
+      next.phone = 'Ingresa un número válido';
+    }
 
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -53,8 +60,8 @@ export function PersonForm({ onAdd }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    onAdd(values.name.trim(), Number(values.age));
-    setValues({ name: '', age: '' });
+    onAdd(values.name.trim(), Number(values.age), values.phone.trim());
+    setValues({ name: '', age: '', phone: '' });
     setErrors({});
   };
 
@@ -83,17 +90,34 @@ export function PersonForm({ onAdd }: Props) {
             helperText={errors.name}
           />
 
-          <TextField
-            fullWidth
-            label="Edad"
-            placeholder="Ej. 25"
-            type="number"
-            value={values.age}
-            onChange={handleChange('age')}
-            error={!!errors.age}
-            helperText={errors.age}
-            slotProps={{ htmlInput: { min: 1, max: 120 } }}
-          />
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Edad"
+                placeholder="Ej. 25"
+                type="number"
+                value={values.age}
+                onChange={handleChange('age')}
+                error={!!errors.age}
+                helperText={errors.age}
+                slotProps={{ htmlInput: { min: 1, max: 120 } }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Número de celular"
+                placeholder="Ej. +51 987 654 321"
+                type="tel"
+                value={values.phone}
+                onChange={handleChange('phone')}
+                error={!!errors.phone}
+                helperText={errors.phone}
+              />
+            </Grid>
+          </Grid>
 
           <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
             <Button type="submit" variant="contained" size="large">

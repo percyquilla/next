@@ -102,3 +102,70 @@ All layouts and pages are **Server Components by default**. Add `'use client'` o
 Use `import 'server-only'` in files that must never run on the client.
 
 Environment variables without `NEXT_PUBLIC_` prefix are not exposed to the client bundle.
+
+## Deployment — Google Cloud Run
+
+La app está desplegada en **Cloud Run**. Las variables de entorno **no** se leen del `.env.local` en producción; se configuran directamente en el servicio.
+
+### Variables de entorno requeridas
+
+| Variable | Descripción |
+|----------|-------------|
+| `WHATSAPP_PHONE_NUMBER_ID` | ID del número de WhatsApp Business (solo dígitos) |
+| `WHATSAPP_ACCESS_TOKEN` | Token de acceso de Meta (System User Token permanente) |
+| `WHATSAPP_VERIFY_TOKEN` | Token secreto elegido por ti para verificar el webhook |
+
+### Configurar variables (Google Cloud Console)
+
+1. [console.cloud.google.com/run](https://console.cloud.google.com/run) → seleccionar el servicio
+2. **Editar y desplegar nueva revisión** → pestaña **Variables y secretos**
+3. Sección **Variables de entorno** → **Agregar variable**
+4. **Implementar**
+
+### Configurar variables (CLI)
+
+```bash
+gcloud run services update TU_SERVICIO \
+  --region TU_REGION \
+  --set-env-vars "WHATSAPP_PHONE_NUMBER_ID=123456,WHATSAPP_ACCESS_TOKEN=EAAB..."
+```
+
+### Configurar con Secret Manager (recomendado para tokens)
+
+```bash
+# Crear el secreto
+echo -n "EAAB..." | gcloud secrets create WHATSAPP_ACCESS_TOKEN --data-file=-
+
+# Vincular al servicio
+gcloud run services update TU_SERVICIO \
+  --region TU_REGION \
+  --set-secrets "WHATSAPP_ACCESS_TOKEN=WHATSAPP_ACCESS_TOKEN:latest"
+```
+
+### WhatsApp API y Webhook
+
+**Archivos clave:**
+- `actions/whatsapp.ts` — Server Action que envía mensajes con axios y guarda en el store
+- `lib/message-store.ts` — Store en memoria (singleton global); persiste dentro de la instancia, se reinicia en cold start
+- `app/api/webhook/whatsapp/route.ts` — Webhook de Meta (GET verificación + POST eventos)
+- `app/api/messages/route.ts` — Endpoint de polling `GET /api/messages?phone=...`
+- `sections/person/whatsapp-chat.tsx` — UI de chat con burbujas y polling cada 3 s
+
+**Endpoint Meta:** `POST https://graph.facebook.com/v25.0/{PHONE_NUMBER_ID}/messages`
+
+**Credenciales:** developers.facebook.com → tu app → WhatsApp → API Setup
+
+**Número del destinatario:** debe estar en formato E.164 (ej. `+51987654321`)
+
+### Configurar Webhook en Meta
+
+1. **developers.facebook.com** → tu app → **WhatsApp** → **Configuration**
+2. En **Webhooks** → **Edit**:
+   - **Callback URL:** `https://tu-dominio.run.app/api/webhook/whatsapp`
+   - **Verify token:** valor de `WHATSAPP_VERIFY_TOKEN`
+3. **Verify and save**
+4. Suscribirse al campo: `messages`
+
+**Flujo de estados:** `sending` → `sent` (✓) → `delivered` (✓✓) → `read` (✓✓ azul)
+
+El webhook actualiza el store al recibir cada evento; el chat lo refleja en el siguiente ciclo de polling (3 s).
