@@ -4,6 +4,7 @@ import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 
 import { ThemeProvider } from '@/theme';
+import { PwaRegister } from '@/components/pwa-register';
 import { defaultSettings, SettingsProvider } from '@/components/settings';
 import { detectSettings } from '@/components/settings/server';
 
@@ -12,8 +13,18 @@ import './globals.css';
 // ----------------------------------------------------------------------
 
 export const metadata: Metadata = {
-  title: 'Next App',
-  description: 'Next.js con Material UI',
+  title: 'Mi App',
+  description: 'Gestión de personas y mensajería WhatsApp',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Mi App',
+  },
+  icons: {
+    icon: '/icons/icon-192x192.png',
+    apple: '/icons/icon-192x192.png',
+  },
 };
 
 export default async function RootLayout({
@@ -35,6 +46,7 @@ export default async function RootLayout({
             <ThemeProvider>{children}</ThemeProvider>
           </SettingsProvider>
         </AppRouterCacheProvider>
+        <PwaRegister />
       </body>
     </html>
   );
