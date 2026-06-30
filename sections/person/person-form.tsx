@@ -1,150 +1,163 @@
 'use client';
 
+import * as z from 'zod';
+import { toast } from 'sonner';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
-import Stack from '@mui/material/Stack';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
 import Divider from '@mui/material/Divider';
-import TextField from '@mui/material/TextField';
-import CardHeader from '@mui/material/CardHeader';
-import CardContent from '@mui/material/CardContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 
-import { PhoneInput } from '@/components/phone-input';
+import { Form, Field, schemaUtils } from '@/components/hook-form';
+
+import type { Person } from './view';
 
 // ----------------------------------------------------------------------
 
-type FormValues = {
-  name: string;
-  age: string;
-  phone: string;
+export const PersonSchema = z.object({
+  nombres: z.string().min(1, { error: 'Los nombres son requeridos' }),
+  apellidos: z.string().min(1, { error: 'Los apellidos son requeridos' }),
+  nroDocumento: z.string().min(1, { error: 'El nro. de documento es requerido' }),
+  fechaNacimiento: z.string().min(1, { error: 'La fecha de nacimiento es requerida' }),
+  celular: schemaUtils.phoneNumber(),
+  direccion: z.string().min(1, { error: 'La dirección es requerida' }),
+});
+
+type PersonFormValues = z.infer<typeof PersonSchema>;
+
+const defaultValues: PersonFormValues = {
+  nombres: '',
+  apellidos: '',
+  nroDocumento: '',
+  fechaNacimiento: '',
+  celular: '',
+  direccion: '',
 };
 
-type FormErrors = {
-  name?: string;
-  age?: string;
-  phone?: string;
-};
+// ----------------------------------------------------------------------
 
 type Props = {
-  onAdd: (name: string, age: number, phone: string) => void;
+  open: boolean;
+  onClose: () => void;
+  onAdd: (person: Person) => void;
 };
 
-export function PersonForm({ onAdd }: Props) {
-  const [values, setValues] = useState<FormValues>({
-    name: '',
-    age: '',
-    phone: '',
+export function PersonForm({ open, onClose, onAdd }: Props) {
+  const [serverError, setServerError] = useState('');
+
+  const methods = useForm<PersonFormValues>({
+    resolver: zodResolver(PersonSchema),
+    defaultValues,
   });
-  const [errors, setErrors] = useState<FormErrors>({});
 
-  const validate = (): boolean => {
-    const next: FormErrors = {};
+  const {
+    reset,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = methods;
 
-    if (!values.name.trim()) {
-      next.name = 'El nombre es requerido';
-    }
-    const ageNum = Number(values.age);
-    if (!values.age) {
-      next.age = 'La edad es requerida';
-    } else if (!Number.isInteger(ageNum) || ageNum < 1 || ageNum > 120) {
-      next.age = 'Ingresa una edad válida (1 – 120)';
-    }
-    if (!values.phone.trim()) {
-      next.phone = 'El celular es requerido';
-    } else if (values.phone.trim().length < 8) {
-      next.phone = 'Número inválido';
-    }
-
-    setErrors(next);
-    return Object.keys(next).length === 0;
+  const handleClose = () => {
+    reset();
+    setServerError('');
+    onClose();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const onSubmit = handleSubmit(async (data) => {
+    setServerError('');
 
-    onAdd(values.name.trim(), Number(values.age), values.phone.trim());
-    setValues({ name: '', age: '', phone: '' });
-    setErrors({});
-  };
+    try {
+      const res = await fetch('/api/personas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? 'Error al registrar la persona');
+      }
+
+      const person: Person = await res.json();
+      onAdd(person);
+      reset();
+      toast.success('Persona registrada correctamente');
+      onClose();
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : 'Error desconocido');
+    }
+  });
 
   return (
-    <Card>
-      <CardHeader
-        title="Agregar persona"
-        subheader="Completa los campos para registrar una nueva persona"
-      />
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Registrar persona</DialogTitle>
 
       <Divider />
 
-      <CardContent>
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-          sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
-        >
-          <TextField
-            fullWidth
-            label="Nombre"
-            placeholder="Ej. Juan Pérez"
-            value={values.name}
-            onChange={(e) => {
-              setValues((prev) => ({ ...prev, name: e.target.value }));
-              if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
-            }}
-            error={!!errors.name}
-            helperText={errors.name}
-          />
+      <Form methods={methods} onSubmit={onSubmit}>
+        <DialogContent sx={{ pt: 3 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            {serverError && (
+              <Alert severity="error" onClose={() => setServerError('')}>
+                {serverError}
+              </Alert>
+            )}
 
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="Edad"
-                placeholder="Ej. 25"
-                type="number"
-                value={values.age}
-                onChange={(e) => {
-                  setValues((prev) => ({ ...prev, age: e.target.value }));
-                  if (errors.age) setErrors((prev) => ({ ...prev, age: undefined }));
-                }}
-                error={!!errors.age}
-                helperText={errors.age}
-                slotProps={{ htmlInput: { min: 1, max: 120 } }}
-              />
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Field.Text name="nombres" label="Nombres" placeholder="Ej. Juan Carlos" />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Field.Text name="apellidos" label="Apellidos" placeholder="Ej. Pérez López" />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Field.Text name="nroDocumento" label="Nro. de documento" placeholder="Ej. 12345678" />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Field.Text
+                  name="fechaNacimiento"
+                  label="Fecha de nacimiento"
+                  type="date"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Field.Phone name="celular" label="Celular" defaultCountry="BO" />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Field.Text name="direccion" label="Dirección" placeholder="Ej. Av. Siempre Viva 123" />
+              </Grid>
             </Grid>
+          </Box>
+        </DialogContent>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <PhoneInput
-                label="Número de celular"
-                defaultCountry="BO"
-                value={values.phone}
-                onChange={(val) => {
-                  setValues((prev) => ({ ...prev, phone: val }));
-                  if (errors.phone) setErrors((prev) => ({ ...prev, phone: undefined }));
-                }}
-              />
-              {errors.phone && (
-                <Box
-                  component="p"
-                  sx={{ mt: 0.5, mx: '14px', typography: 'caption', color: 'error.main' }}
-                >
-                  {errors.phone}
-                </Box>
-              )}
-            </Grid>
-          </Grid>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button onClick={handleClose} color="inherit" disabled={isSubmitting}>
+            Cancelar
+          </Button>
 
-          <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
-            <Button type="submit" variant="contained" size="large">
-              Agregar
-            </Button>
-          </Stack>
-        </Box>
-      </CardContent>
-    </Card>
+          <Button
+            type="submit"
+            variant="contained"
+            loading={isSubmitting}
+            loadingIndicator="Registrando..."
+          >
+            Registrar
+          </Button>
+        </DialogActions>
+      </Form>
+    </Dialog>
   );
 }

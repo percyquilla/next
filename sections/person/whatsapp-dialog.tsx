@@ -51,7 +51,7 @@ export function WhatsAppDialog({ open, person, onClose }: Props) {
     setSendState('loading');
     setErrorMsg('');
 
-    const result = await sendWhatsAppMessage(person.phone, message);
+    const result = await sendWhatsAppMessage(person.celular, message);
 
     if (result.success) {
       setSendState('success');
@@ -117,12 +117,12 @@ export function WhatsAppDialog({ open, person, onClose }: Props) {
           })}
         >
           <Avatar sx={{ bgcolor: '#25D366', color: '#fff', fontWeight: 700 }}>
-            {person.name.trim()[0].toUpperCase()}
+            {person.nombres.trim()[0].toUpperCase()}
           </Avatar>
           <Box>
-            <Typography variant="subtitle2">{person.name}</Typography>
+            <Typography variant="subtitle2">{person.nombres} {person.apellidos}</Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {person.phone}
+              {person.celular}
             </Typography>
           </Box>
         </Box>
@@ -134,7 +134,7 @@ export function WhatsAppDialog({ open, person, onClose }: Props) {
           minRows={4}
           maxRows={8}
           label="Mensaje"
-          placeholder={`Hola ${person.name.split(' ')[0]}, ...`}
+          placeholder={`Hola ${person.nombres.split(' ')[0]}, ...`}
           value={message}
           onChange={(e) => {
             setMessage(e.target.value);

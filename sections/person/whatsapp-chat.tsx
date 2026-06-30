@@ -85,7 +85,7 @@ export function WhatsAppChat({ open, person, onClose }: Props) {
   const fetchMessages = useCallback(async () => {
     if (!person) return;
     try {
-      const res = await fetch(`/api/messages?phone=${encodeURIComponent(person.phone)}`);
+      const res = await fetch(`/api/messages?phone=${encodeURIComponent(person.celular)}`);
       if (res.ok) {
         const data = await res.json();
         setMessages(data.messages ?? []);
@@ -123,7 +123,7 @@ export function WhatsAppChat({ open, person, onClose }: Props) {
     };
     setMessages((prev) => [...prev, optimistic]);
 
-    const result = await sendWhatsAppMessage(person.phone, text);
+    const result = await sendWhatsAppMessage(person.celular, text);
 
     if (!result.success) {
       setError(result.error);
@@ -183,15 +183,15 @@ export function WhatsAppChat({ open, person, onClose }: Props) {
               color: 'primary.contrastText',
             }}
           >
-            {person.name.trim()[0].toUpperCase()}
+            {person.nombres.trim()[0].toUpperCase()}
           </Avatar>
 
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-              {person.name}
+              {person.nombres} {person.apellidos}
             </Typography>
             <Typography variant="caption" sx={{ opacity: 0.72 }}>
-              {person.phone}
+              {person.celular}
             </Typography>
           </Box>
 

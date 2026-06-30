@@ -2,46 +2,54 @@
 
 import { useState } from 'react';
 
+import { toast } from 'sonner';
+
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
 import Divider from '@mui/material/Divider';
 import Table from '@mui/material/Table';
 import TableRow from '@mui/material/TableRow';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
+import IconButton from '@mui/material/IconButton';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 import TableContainer from '@mui/material/TableContainer';
+import CircularProgress from '@mui/material/CircularProgress';
+
+import { Iconify } from '@/components/iconify';
 
 import type { Person } from './view';
 import { WhatsAppChat } from './whatsapp-chat';
+import { PersonViewDialog } from './person-view-dialog';
+import { PersonEditDialog } from './person-edit-dialog';
 
 // ----------------------------------------------------------------------
 
-const AGE_COLOR = (age: number): 'success' | 'info' | 'warning' | 'error' => {
-  if (age < 18) return 'info';
-  if (age < 40) return 'success';
-  if (age < 65) return 'warning';
-  return 'error';
-};
-
-function stringAvatar(name: string) {
-  const parts = name.trim().split(' ');
-  const initials = parts.length >= 2 ? `${parts[0][0]}${parts[1][0]}` : parts[0][0];
-  return initials.toUpperCase();
+function initials(nombres: string, apellidos: string) {
+  const n = nombres.trim()[0] ?? '';
+  const a = apellidos.trim()[0] ?? '';
+  return (n + a).toUpperCase();
 }
 
-function stringToColor(name: string) {
+function stringToColor(str: string) {
   let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
   return `hsl(${Math.abs(hash) % 360}, 55%, 45%)`;
+}
+
+function formatDate(iso: string) {
+  if (!iso) return '—';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
 }
 
 // ----------------------------------------------------------------------
@@ -49,10 +57,33 @@ function stringToColor(name: string) {
 type Props = {
   people: Person[];
   onDelete: (id: string) => void;
+  onEdit: (updated: Person) => void;
+  onOpenAdd: () => void;
 };
 
-export function PersonTable({ people, onDelete }: Props) {
-  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+export function PersonTable({ people, onDelete, onEdit, onOpenAdd }: Props) {
+  const [chatPerson, setChatPerson] = useState<Person | null>(null);
+  const [viewPerson, setViewPerson] = useState<Person | null>(null);
+  const [editPerson, setEditPerson] = useState<Person | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const handleDelete = async (id: string) => {
+    setDeleting(id);
+    try {
+      const res = await fetch(`/api/personas/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        toast.error(body.error ?? 'Error al eliminar la persona');
+        return;
+      }
+      onDelete(id);
+      toast.success('Persona eliminada correctamente');
+    } catch {
+      toast.error('Error al eliminar la persona');
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   return (
     <>
@@ -60,6 +91,15 @@ export function PersonTable({ people, onDelete }: Props) {
         <CardHeader
           title="Lista de personas"
           subheader={`${people.length} ${people.length === 1 ? 'persona registrada' : 'personas registradas'}`}
+          action={
+            <Button
+              variant="contained"
+              startIcon={<Iconify icon="mingcute:add-line" />}
+              onClick={onOpenAdd}
+            >
+              Nueva persona
+            </Button>
+          }
         />
 
         <Divider />
@@ -85,9 +125,11 @@ export function PersonTable({ people, onDelete }: Props) {
               <TableHead>
                 <TableRow>
                   <TableCell>#</TableCell>
-                  <TableCell>Nombre</TableCell>
+                  <TableCell>Persona</TableCell>
+                  <TableCell>Documento</TableCell>
+                  <TableCell>Nacimiento</TableCell>
                   <TableCell>Celular</TableCell>
-                  <TableCell>Edad</TableCell>
+                  <TableCell>Estado</TableCell>
                   <TableCell align="right">Acciones</TableCell>
                 </TableRow>
               </TableHead>
@@ -100,62 +142,101 @@ export function PersonTable({ people, onDelete }: Props) {
                     </TableCell>
 
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Avatar
                           sx={{
-                            width: 40,
-                            height: 40,
-                            fontSize: 14,
+                            width: 38,
+                            height: 38,
+                            fontSize: 13,
                             fontWeight: 700,
-                            bgcolor: stringToColor(person.name),
+                            bgcolor: stringToColor(person.nombres + person.apellidos),
                           }}
                         >
-                          {stringAvatar(person.name)}
+                          {initials(person.nombres, person.apellidos)}
                         </Avatar>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {person.name}
-                        </Typography>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {person.nombres} {person.apellidos}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            {person.direccion || '—'}
+                          </Typography>
+                        </Box>
                       </Box>
                     </TableCell>
 
                     <TableCell>
                       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        {person.phone}
+                        {person.nroDocumento}
+                      </Typography>
+                    </TableCell>
+
+                    <TableCell>
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        {formatDate(person.fechaNacimiento)}
+                      </Typography>
+                    </TableCell>
+
+                    <TableCell>
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        {person.celular || '—'}
                       </Typography>
                     </TableCell>
 
                     <TableCell>
                       <Chip
-                        label={`${person.age} años`}
                         size="small"
-                        color={AGE_COLOR(person.age)}
-                        variant="soft"
+                        label={person.estado}
+                        color={person.estado === 'ACTIVO' ? 'success' : 'default'}
                       />
                     </TableCell>
 
                     <TableCell align="right">
-                      <Stack direction="row" sx={{ gap: 1, justifyContent: 'flex-end' }}>
-                        <Button
-                          size="small"
-                          variant="soft"
-                          onClick={() => setSelectedPerson(person)}
-                          sx={{
-                            color: '#25D366',
-                            borderColor: '#25D366',
-                            '&:hover': { bgcolor: '#25D36618' },
-                          }}
-                        >
-                          WhatsApp
-                        </Button>
+                      <Stack direction="row" sx={{ gap: 0.5, justifyContent: 'flex-end' }}>
+                        <Tooltip title="Ver detalles">
+                          <IconButton
+                            size="small"
+                            color="info"
+                            onClick={() => setViewPerson(person)}
+                          >
+                            <Iconify icon="solar:eye-bold" width={18} />
+                          </IconButton>
+                        </Tooltip>
 
-                        <Button
-                          size="small"
-                          variant="soft"
-                          color="error"
-                          onClick={() => onDelete(person.id)}
-                        >
-                          Eliminar
-                        </Button>
+                        <Tooltip title="Editar">
+                          <IconButton
+                            size="small"
+                            color="warning"
+                            onClick={() => setEditPerson(person)}
+                          >
+                            <Iconify icon="solar:pen-2-bold" width={18} />
+                          </IconButton>
+                        </Tooltip>
+
+                        <Tooltip title="WhatsApp">
+                          <IconButton
+                            size="small"
+                            onClick={() => setChatPerson(person)}
+                            sx={{ color: '#25D366' }}
+                          >
+                            <Iconify icon="ic:baseline-whatsapp" width={18} />
+                          </IconButton>
+                        </Tooltip>
+
+                        <Tooltip title="Eliminar">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            disabled={deleting === person.id}
+                            onClick={() => handleDelete(person.id)}
+                          >
+                            {deleting === person.id ? (
+                              <CircularProgress size={16} color="error" />
+                            ) : (
+                              <Iconify icon="solar:trash-bin-trash-bold" width={18} />
+                            )}
+                          </IconButton>
+                        </Tooltip>
                       </Stack>
                     </TableCell>
                   </TableRow>
@@ -166,10 +247,26 @@ export function PersonTable({ people, onDelete }: Props) {
         )}
       </Card>
 
+      <PersonViewDialog
+        open={!!viewPerson}
+        person={viewPerson}
+        onClose={() => setViewPerson(null)}
+      />
+
+      <PersonEditDialog
+        open={!!editPerson}
+        person={editPerson}
+        onClose={() => setEditPerson(null)}
+        onSave={(updated) => {
+          onEdit(updated);
+          setEditPerson(null);
+        }}
+      />
+
       <WhatsAppChat
-        open={!!selectedPerson}
-        person={selectedPerson}
-        onClose={() => setSelectedPerson(null)}
+        open={!!chatPerson}
+        person={chatPerson}
+        onClose={() => setChatPerson(null)}
       />
     </>
   );

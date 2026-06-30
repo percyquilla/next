@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from 'react';
 
-import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 
@@ -13,38 +12,54 @@ import { PersonTable } from './person-table';
 
 export type Person = {
   id: string;
-  name: string;
-  age: number;
-  phone: string;
+  nombres: string;
+  apellidos: string;
+  nroDocumento: string;
+  fechaNacimiento: string;
+  celular: string;
+  direccion: string;
+  estado: string;
+  usuarioAut: string;
 };
 
-export function PersonView() {
-  const [people, setPeople] = useState<Person[]>([]);
+type Props = {
+  initialPeople: Person[];
+};
 
-  const handleAdd = useCallback((name: string, age: number, phone: string) => {
-    setPeople((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), name, age, phone },
-    ]);
+export function PersonView({ initialPeople }: Props) {
+  const [people, setPeople] = useState<Person[]>(initialPeople);
+  const [openAdd, setOpenAdd] = useState(false);
+
+  const handleAdd = useCallback((person: Person) => {
+    setPeople((prev) => [person, ...prev]);
   }, []);
 
   const handleDelete = useCallback((id: string) => {
     setPeople((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
-  return (
-    <Container maxWidth="md" sx={{ py: 6 }}>
-      <Box sx={{ mb: 5 }}>
-        <Typography variant="h4">Registro de personas</Typography>
-        <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
-          Ingresa el nombre, edad y celular para agregar personas a la lista.
-        </Typography>
-      </Box>
+  const handleEdit = useCallback((updated: Person) => {
+    setPeople((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+  }, []);
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <PersonForm onAdd={handleAdd} />
-        <PersonTable people={people} onDelete={handleDelete} />
-      </Box>
+  return (
+    <Container maxWidth="lg" sx={{ py: 6 }}>
+      <Typography variant="h4" sx={{ mb: 5 }}>
+        Registro de personas
+      </Typography>
+
+      <PersonTable
+        people={people}
+        onDelete={handleDelete}
+        onEdit={handleEdit}
+        onOpenAdd={() => setOpenAdd(true)}
+      />
+
+      <PersonForm
+        open={openAdd}
+        onClose={() => setOpenAdd(false)}
+        onAdd={handleAdd}
+      />
     </Container>
   );
 }

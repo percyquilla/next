@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 
+import { Toaster } from 'sonner';
+
 import { ThemeProvider } from '@/theme';
 import { PwaRegister } from '@/components/pwa-register';
 import { defaultSettings, SettingsProvider } from '@/components/settings';
@@ -47,6 +49,7 @@ export default async function RootLayout({
           </SettingsProvider>
         </AppRouterCacheProvider>
         <PwaRegister />
+        <Toaster position="bottom-center" richColors closeButton />
       </body>
     </html>
   );
