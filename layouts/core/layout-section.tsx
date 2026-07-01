@@ -20,9 +20,18 @@ type Props = {
   className?: string;
   headerSection?: ReactNode;
   footerSection?: ReactNode;
+  sidebarSection?: ReactNode;
 };
 
-export function LayoutSection({ sx, cssVars, children, className, headerSection, footerSection }: Props) {
+export function LayoutSection({
+  sx,
+  cssVars,
+  children,
+  className,
+  headerSection,
+  footerSection,
+  sidebarSection,
+}: Props) {
   const inputGlobalStyles = (
     <GlobalStyles styles={(theme: any) => ({ body: { ...layoutSectionVars(theme), ...cssVars } })} />
   );
@@ -35,9 +44,22 @@ export function LayoutSection({ sx, cssVars, children, className, headerSection,
         className={mergeClasses([layoutClasses.root, className])}
         sx={sx}
       >
-        {headerSection}
-        {children}
-        {footerSection}
+        {sidebarSection ? (
+          <>
+            {sidebarSection}
+            <LayoutSidebarContainer className={layoutClasses.sidebarContainer}>
+              {headerSection}
+              {children}
+              {footerSection}
+            </LayoutSidebarContainer>
+          </>
+        ) : (
+          <>
+            {headerSection}
+            {children}
+            {footerSection}
+          </>
+        )}
       </LayoutRoot>
     </>
   );
@@ -48,5 +70,11 @@ export function LayoutSection({ sx, cssVars, children, className, headerSection,
 const LayoutRoot = styled('div')({
   display: 'flex',
   minHeight: '100vh',
+  flexDirection: 'column',
+});
+
+const LayoutSidebarContainer = styled('div')({
+  display: 'flex',
+  flex: '1 1 auto',
   flexDirection: 'column',
 });

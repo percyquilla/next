@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import { HomeView } from '@/sections/home/view';
-import { MainLayout } from '@/layouts/main';
+import { DashboardLayout } from '@/layouts/dashboard';
 
 // ----------------------------------------------------------------------
 
@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <MainLayout>
+    <DashboardLayout>
       <HomeView />
-    </MainLayout>
+    </DashboardLayout>
   );
 }

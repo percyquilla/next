@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import type { ReactNode } from 'react';
 
@@ -10,7 +10,7 @@ import Link from '@mui/material/Link';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
-import { LayoutSection, HeaderSection, MainSection } from '../core';
+import { LayoutSection, HeaderSection, MainSection } from '@/layouts/core';
 import { HomeFooter } from './footer';
 
 // ----------------------------------------------------------------------

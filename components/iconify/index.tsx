@@ -2,6 +2,10 @@
 
 import type { SxProps, Theme } from '@mui/material/styles';
 
+export const iconifyClasses = {
+  root: 'iconify__root',
+};
+
 import { Icon } from '@iconify/react';
 
 import Box from '@mui/material/Box';

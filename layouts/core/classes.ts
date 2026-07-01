@@ -1,4 +1,4 @@
-import { createClasses } from '@/theme/create-classes';
+import { createClasses } from '@/lib/theme/create-classes';
 
 export const layoutClasses = {
   root: createClasses('layout__root'),
@@ -7,6 +7,9 @@ export const layoutClasses = {
   nav: {
     root: createClasses('layout__nav__root'),
     mobile: createClasses('layout__nav__mobile'),
+    vertical: createClasses('layout__nav__vertical'),
+    horizontal: createClasses('layout__nav__horizontal'),
   },
   content: createClasses('layout__main__content'),
+  sidebarContainer: createClasses('layout__sidebar__container'),
 };

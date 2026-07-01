@@ -9,6 +9,7 @@ import { ThemeProvider } from '@/theme';
 import { PwaRegister } from '@/components/pwa-register';
 import { defaultSettings, SettingsProvider } from '@/components/settings';
 import { detectSettings } from '@/components/settings/server';
+import { NextAuthSessionProvider } from '@/auth/session-provider';
 
 import './globals.css';
 
@@ -41,12 +42,14 @@ export default async function RootLayout({
       <body>
         <InitColorSchemeScript attribute="data-color-scheme" defaultMode="light" />
         <AppRouterCacheProvider options={{ key: 'css' }}>
-          <SettingsProvider
-            defaultSettings={defaultSettings}
-            cookieSettings={cookieSettings}
-          >
-            <ThemeProvider>{children}</ThemeProvider>
-          </SettingsProvider>
+          <NextAuthSessionProvider>
+            <SettingsProvider
+              defaultSettings={defaultSettings}
+              cookieSettings={cookieSettings}
+            >
+              <ThemeProvider>{children}</ThemeProvider>
+            </SettingsProvider>
+          </NextAuthSessionProvider>
         </AppRouterCacheProvider>
         <PwaRegister />
         <Toaster position="bottom-center" richColors closeButton />

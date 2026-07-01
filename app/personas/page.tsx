@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import pool from '@/lib/db';
-import { MainLayout } from '@/layouts/main';
+import { DashboardLayout } from '@/layouts/dashboard';
 import { PersonView } from '@/sections/person/view';
 import type { Person } from '@/sections/person/view';
 
@@ -35,8 +35,8 @@ export default async function Page() {
   }
 
   return (
-    <MainLayout>
+    <DashboardLayout>
       <PersonView initialPeople={initialPeople} />
-    </MainLayout>
+    </DashboardLayout>
   );
 }
