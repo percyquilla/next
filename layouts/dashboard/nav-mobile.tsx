@@ -27,12 +27,12 @@ export function NavMobile({
 }: { sx?: any; data?: any; open?: boolean; slots?: any; onClose?: () => void; className?: string; checkPermissions?: any; cssVars?: any; [key: string]: any }) {
   const pathname = usePathname();
 
-  useEffect(() => {
-    if (open) {
-      onClose();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  // useEffect(() => {
+  //   if (open) {
+  //     onClose();
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [pathname]);
 
   return (
     <Drawer
